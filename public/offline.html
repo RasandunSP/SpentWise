@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Offline · SpentWise</title>
+    <style>
+      :root { color-scheme: light; }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 24px;
+        text-align: center;
+        background: #f8f9ff;
+        color: #0b1c30;
+        font-family: "Open Sans", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .mark {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 16px;
+        border-radius: 16px;
+        background: #1a58b7;
+        display: grid;
+        place-items: center;
+        font-size: 30px;
+      }
+      h1 { font-size: 24px; line-height: 32px; font-weight: 700; margin: 0; }
+      p { font-size: 16px; line-height: 24px; color: #424752; margin: 0; max-width: 30ch; }
+      button {
+        margin-top: 24px;
+        height: 48px;
+        padding: 0 32px;
+        border: 0;
+        border-radius: 999px;
+        background: #1a58b7;
+        color: #fff;
+        font: inherit;
+        font-size: 18px;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="mark">💳</div>
+    <h1>You&rsquo;re offline</h1>
+    <p>SpentWise needs a connection to load your expenses. It&rsquo;ll pick up where you left off.</p>
+    <button onclick="location.reload()">Try again</button>
+  </body>
+</html>

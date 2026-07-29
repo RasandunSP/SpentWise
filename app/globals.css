@@ -1,26 +1,190 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ---------------------------------------------------------------------------
+   SpentWise — editorial minimal.
+
+   The type does the work here. Large figures sit at weight 200–300 so they
+   read as calm rather than shouty; weight 700 is rationed for tiny uppercase
+   labels, which is what gives the page its contrast. Colour is nearly absent —
+   ink on paper, one accent — so the numbers are the only thing competing for
+   attention.
+   --------------------------------------------------------------------------- */
+@theme {
+  /* --- Ink & paper ------------------------------------------------------ */
+  --color-ink: #0a0e14;
+  --color-ink-muted: #5c6572;
+  --color-ink-faint: #9aa2ae;
+  --color-paper: #ffffff;
+  --color-paper-dim: #f7f8fa;
+  --color-paper-sunk: #f1f3f6;
+  --color-line: #e9ebef;
+  --color-line-strong: #d7dbe1;
+
+  /* --- Accent ----------------------------------------------------------- */
+  --color-accent: #1a58b7;
+  --color-accent-soft: #eef3fc;
+  --color-on-accent: #ffffff;
+
+  /* --- Semantic --------------------------------------------------------- */
+  --color-positive: #00695c;
+  --color-negative: #b3123c;
+  --color-negative-soft: #fdeef1;
+
+  /* --- Type ------------------------------------------------------------- */
+  --font-sans: var(--font-elms-sans), ui-sans-serif, system-ui, sans-serif;
+
+  /* The amount on the add screen. Nothing else comes close to this size. */
+  --text-amount: 4.5rem;
+  --text-amount--line-height: 1;
+  --text-amount--font-weight: 200;
+  --text-amount--letter-spacing: -0.05em;
+
+  /* Hero figures on home and reports. */
+  --text-figure: 3rem;
+  --text-figure--line-height: 1.05;
+  --text-figure--font-weight: 250;
+  --text-figure--letter-spacing: -0.04em;
+
+  --text-figure-sm: 1.75rem;
+  --text-figure-sm--line-height: 1.15;
+  --text-figure-sm--font-weight: 300;
+  --text-figure-sm--letter-spacing: -0.03em;
+
+  --text-headline: 1.75rem;
+  --text-headline--line-height: 1.2;
+  --text-headline--font-weight: 300;
+  --text-headline--letter-spacing: -0.025em;
+
+  --text-title: 1.0625rem;
+  --text-title--line-height: 1.4;
+  --text-title--font-weight: 600;
+  --text-title--letter-spacing: -0.01em;
+
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.5;
+  --text-body--font-weight: 400;
+
+  --text-meta: 0.8125rem;
+  --text-meta--line-height: 1.45;
+  --text-meta--font-weight: 400;
+
+  /* The counterweight to all that light type. Always uppercase. */
+  --text-label: 0.6875rem;
+  --text-label--line-height: 1.2;
+  --text-label--font-weight: 700;
+  --text-label--letter-spacing: 0.14em;
+
+  /* --- Shape ------------------------------------------------------------ */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.125rem;
+  --radius-xl: 1.5rem;
+
+  /* --- Rhythm ----------------------------------------------------------- */
+  --spacing-gutter: 22px;
+  --spacing-section: 44px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* --------------------------------------------------------------------------- */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background-color: var(--color-paper);
+  overscroll-behavior-y: none;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+/* Figures line up in columns only if the digits are the same width. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* iOS Safari zooms the viewport when a focused input is under 16px. */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+/* Material Symbols, loaded in app/layout.tsx. Default to a thin stroke —
+   heavier icons fight the light type. */
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings:
+    "FILL" var(--symbol-fill, 0),
+    "wght" var(--symbol-weight, 250),
+    "GRAD" 0,
+    "opsz" 24;
+  min-width: 1em;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.tap {
+  transition:
+    transform 0.12s cubic-bezier(0.2, 0, 0, 1),
+    opacity 0.12s ease,
+    background-color 0.12s ease;
+}
+.tap:active {
+  transform: scale(0.97);
+}
+
+/* The amount counter on the add screen, when a digit lands. */
+@keyframes tick {
+  from {
+    transform: translateY(0.08em);
+    opacity: 0.55;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.animate-tick {
+  animation: tick 0.14s cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
