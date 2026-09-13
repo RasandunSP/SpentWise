@@ -3,11 +3,19 @@ import type { CategoryTone } from "@/lib/supabase/types";
 /**
  * Category colour tones — the categorical palette for every data mark.
  *
- * The five coloured hues were checked with the dataviz palette validator
- * against the #f8f9ff surface and pass all six checks: lightness band, chroma
- * floor, CVD separation (worst adjacent pair ΔE 11.7 deutan), normal-vision
- * floor (ΔE 16.5) and 3:1 contrast. Do not nudge these values by eye — re-run
- * the validator if they ever need to change.
+ * These resolve to CSS variables rather than literal hex, because the palette
+ * has two instances: the light steps and a separate set chosen for the dark
+ * surface. Both live in app/globals.css. A dark palette is *selected against
+ * its own surface*, never produced by inverting the light one.
+ *
+ * Both sets were checked with the dataviz palette validator and pass all six
+ * checks — lightness band, chroma floor, CVD separation, normal-vision floor
+ * and 3:1 contrast:
+ *
+ *   light on #ffffff  worst adjacent ΔE 11.7 deutan / normal 16.5
+ *   dark  on #0e1116  worst all-pairs ΔE 9.5 deutan, 9.0 tritan / normal 16.7
+ *
+ * Do not nudge these by eye — re-run the validator if they ever change.
  *
  * `slate` is the reserved neutral for "Other" and for expenses whose category
  * was deleted. It sits below the chroma floor on purpose (that is what makes it
@@ -16,14 +24,14 @@ import type { CategoryTone } from "@/lib/supabase/types";
  */
 export const CATEGORY_TONES: Record<
   CategoryTone,
-  { hex: string; label: string }
+  { color: string; label: string }
 > = {
-  blue: { hex: "#1a58b7", label: "Blue" },
-  teal: { hex: "#00968a", label: "Teal" },
-  rose: { hex: "#b90538", label: "Rose" },
-  amber: { hex: "#c2670a", label: "Amber" },
-  violet: { hex: "#7c3aed", label: "Violet" },
-  slate: { hex: "#5f6368", label: "Grey" },
+  blue: { color: "var(--tone-blue)", label: "Blue" },
+  teal: { color: "var(--tone-teal)", label: "Teal" },
+  rose: { color: "var(--tone-rose)", label: "Rose" },
+  amber: { color: "var(--tone-amber)", label: "Amber" },
+  violet: { color: "var(--tone-violet)", label: "Violet" },
+  slate: { color: "var(--tone-slate)", label: "Grey" },
 };
 
 export const TONE_KEYS = Object.keys(CATEGORY_TONES) as CategoryTone[];
@@ -32,9 +40,9 @@ export function toneOf(tone: string | null | undefined) {
   return CATEGORY_TONES[(tone ?? "slate") as CategoryTone] ?? CATEGORY_TONES.slate;
 }
 
-/** A 10%-opacity wash of the tone, for icon bubbles and selected chips. */
-export function toneWash(hex: string): string {
-  return `color-mix(in srgb, ${hex} 12%, transparent)`;
+/** A low-opacity wash of the tone, for icon bubbles and selected chips. */
+export function toneWash(color: string): string {
+  return `color-mix(in srgb, ${color} 12%, transparent)`;
 }
 
 /**

@@ -7,15 +7,22 @@ import type { MetadataRoute } from "next";
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
+    id: "/",
     name: "SpentWise — Expense Tracker",
     short_name: "SpentWise",
     description: "A calm, private place to track what you spend.",
+    lang: "en",
+    dir: "ltr",
     start_url: "/home",
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#f8f9ff",
-    theme_color: "#f8f9ff",
+    // The splash screen cannot follow the system scheme — a manifest carries
+    // one colour — so both match the light theme's paper, which is also what
+    // an install preview renders against. app/layout.tsx still ships a
+    // per-scheme `theme-color`, so the live chrome does adapt.
+    background_color: "#ffffff",
+    theme_color: "#ffffff",
     categories: ["finance", "productivity"],
     icons: [
       {

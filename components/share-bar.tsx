@@ -46,7 +46,7 @@ export function ShareBar({
             className="rounded-full"
             style={{
               width: `${share(segment.value)}%`,
-              backgroundColor: toneOf(segment.tone).hex,
+              backgroundColor: toneOf(segment.tone).color,
             }}
           />
         ))}
@@ -58,7 +58,7 @@ export function ShareBar({
           <li key={segment.id} className="flex items-center gap-1.5">
             <span
               className="h-1.5 w-1.5 shrink-0 rounded-full"
-              style={{ backgroundColor: toneOf(segment.tone).hex }}
+              style={{ backgroundColor: toneOf(segment.tone).color }}
             />
             <span className="text-meta text-ink-muted">{segment.label}</span>
             <span className="tabular text-meta text-ink-faint">

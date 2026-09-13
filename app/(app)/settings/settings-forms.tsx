@@ -4,8 +4,10 @@ import { useActionState, useState } from "react";
 import { Icon } from "@/components/icon";
 import { TextField } from "@/components/text-field";
 import { CATEGORY_TONES, ICON_CHOICES, TONE_KEYS, toneOf } from "@/lib/categories";
+import { currencyName, groupCurrencies } from "@/lib/currencies";
 import type { Category, CategoryTone, Profile } from "@/lib/supabase/types";
 import { createCategory, updateProfile, type SettingsState } from "./actions";
+import { PressButton } from "@/components/pressable";
 
 const EMPTY: SettingsState = {};
 
@@ -27,8 +29,20 @@ function Feedback({ state }: { state: SettingsState }) {
   return null;
 }
 
-export function ProfileForm({ profile }: { profile: Profile }) {
+export function ProfileForm({
+  profile,
+  currencyCodes,
+  primaryCode,
+}: {
+  profile: Profile;
+  /** Every code the rate provider quotes; empty when rates are unavailable. */
+  currencyCodes: string[];
+  primaryCode: string;
+}) {
   const [state, action, pending] = useActionState(updateProfile, EMPTY);
+  const { common, rest } = groupCurrencies(
+    currencyCodes.filter((code) => code !== primaryCode),
+  );
 
   return (
     <form action={action} className="flex flex-col gap-7">
@@ -62,9 +76,60 @@ export function ProfileForm({ profile }: { profile: Profile }) {
         />
       </div>
 
+      <div className="flex flex-col gap-1">
+        <label
+          htmlFor="secondary_currency"
+          className="text-label uppercase text-ink-faint"
+        >
+          Second currency
+        </label>
+        {currencyCodes.length > 0 ? (
+          <select
+            id="secondary_currency"
+            name="secondary_currency"
+            defaultValue={profile.secondary_currency ?? ""}
+            className="w-full appearance-none border-0 border-b border-line bg-transparent
+              px-0 pb-2.5 pt-1.5 text-title text-ink focus:border-accent focus:outline-none"
+          >
+            <option value="">None — {primaryCode} only</option>
+            <optgroup label="Common">
+              {common.map((code) => (
+                <option key={code} value={code}>
+                  {code} · {currencyName(code)}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="All currencies">
+              {rest.map((code) => (
+                <option key={code} value={code}>
+                  {code} · {currencyName(code)}
+                </option>
+              ))}
+            </optgroup>
+          </select>
+        ) : (
+          <>
+            {/* Keeps the saved choice intact when the provider is unreachable —
+                submitting without this field would silently clear it. */}
+            <input
+              type="hidden"
+              name="secondary_currency"
+              value={profile.secondary_currency ?? ""}
+            />
+            <p className="pt-1.5 text-body text-ink-faint">
+              {profile.secondary_currency ?? "None"} · rates unavailable
+            </p>
+          </>
+        )}
+        <p className="pt-1.5 text-meta text-ink-faint">
+          Adds a second option when entering an amount. Everything is still
+          stored and reported in {primaryCode}.
+        </p>
+      </div>
+
       <Feedback state={state} />
 
-      <button
+      <PressButton
         type="submit"
         disabled={pending}
         className="tap flex h-12 items-center justify-center gap-2 self-start rounded-full
@@ -74,7 +139,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
           <Icon name="progress_activity" size={18} className="animate-spin text-paper" />
         ) : null}
         Save
-      </button>
+      </PressButton>
     </form>
   );
 }
@@ -90,14 +155,14 @@ export function NewCategoryForm({ existing }: { existing: Category[] }) {
 
   if (!open) {
     return (
-      <button
+      <PressButton
         type="button"
         onClick={() => setOpen(true)}
         className="tap flex items-center gap-2 self-start pt-5 text-body text-accent"
       >
         <Icon name="add" size={18} className="text-accent" />
         New category
-      </button>
+      </PressButton>
     );
   }
 
@@ -121,7 +186,7 @@ export function NewCategoryForm({ existing }: { existing: Category[] }) {
         <span className="text-label uppercase text-ink-faint">Colour</span>
         <div className="flex flex-wrap gap-3">
           {TONE_KEYS.map((key) => (
-            <button
+            <PressButton
               key={key}
               type="button"
               onClick={() => setTone(key)}
@@ -130,7 +195,7 @@ export function NewCategoryForm({ existing }: { existing: Category[] }) {
               className={`tap h-7 w-7 rounded-full ${
                 tone === key ? "ring-2 ring-ink ring-offset-2 ring-offset-paper" : ""
               } ${used.has(key) && tone !== key ? "opacity-30" : ""}`}
-              style={{ backgroundColor: CATEGORY_TONES[key].hex }}
+              style={{ backgroundColor: CATEGORY_TONES[key].color }}
             />
           ))}
         </div>
@@ -140,7 +205,7 @@ export function NewCategoryForm({ existing }: { existing: Category[] }) {
         <span className="text-label uppercase text-ink-faint">Icon</span>
         <div className="hide-scrollbar grid max-h-36 grid-cols-8 gap-1 overflow-y-auto">
           {ICON_CHOICES.map((choice) => (
-            <button
+            <PressButton
               key={choice}
               type="button"
               onClick={() => setIcon(choice)}
@@ -149,10 +214,10 @@ export function NewCategoryForm({ existing }: { existing: Category[] }) {
               className={`tap flex aspect-square items-center justify-center rounded-md ${
                 icon === choice ? "bg-paper-sunk" : ""
               }`}
-              style={icon === choice ? { color: toneOf(tone).hex } : undefined}
+              style={icon === choice ? { color: toneOf(tone).color } : undefined}
             >
               <Icon name={choice} size={20} />
-            </button>
+            </PressButton>
           ))}
         </div>
       </div>
@@ -160,7 +225,7 @@ export function NewCategoryForm({ existing }: { existing: Category[] }) {
       <Feedback state={state} />
 
       <div className="flex items-center gap-2">
-        <button
+        <PressButton
           type="submit"
           disabled={pending}
           className="tap flex h-12 flex-1 items-center justify-center gap-2 rounded-full
@@ -170,14 +235,14 @@ export function NewCategoryForm({ existing }: { existing: Category[] }) {
             <Icon name="progress_activity" size={18} className="animate-spin text-paper" />
           ) : null}
           Add category
-        </button>
-        <button
+        </PressButton>
+        <PressButton
           type="button"
           onClick={() => setOpen(false)}
           className="tap h-12 px-5 text-body text-ink-faint"
         >
           Cancel
-        </button>
+        </PressButton>
       </div>
     </form>
   );

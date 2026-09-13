@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { Icon } from "@/components/icon";
 import { TextField } from "@/components/text-field";
 import { signIn, signUp, type AuthState } from "./actions";
+import { PressButton } from "@/components/pressable";
 
 const EMPTY: AuthState = {};
 
@@ -67,7 +68,7 @@ export function LoginForm({
           placeholder={isSignUp ? "At least 8 characters" : "Your password"}
           className="pr-10"
         />
-        <button
+        <PressButton
           type="button"
           onClick={() => setShowPassword((visible) => !visible)}
           aria-label={showPassword ? "Hide password" : "Show password"}
@@ -75,7 +76,7 @@ export function LoginForm({
             rounded-full text-ink-faint"
         >
           <Icon name={showPassword ? "visibility_off" : "visibility"} size={19} />
-        </button>
+        </PressButton>
       </div>
 
       {error ? (
@@ -90,7 +91,7 @@ export function LoginForm({
         </p>
       ) : null}
 
-      <button
+      <PressButton
         type="submit"
         disabled={pending}
         className="tap mt-1 flex h-14 items-center justify-center gap-2 rounded-full
@@ -104,17 +105,17 @@ export function LoginForm({
         ) : (
           <>{isSignUp ? "Create account" : "Sign in"}</>
         )}
-      </button>
+      </PressButton>
 
       <p className="text-center text-meta text-ink-faint">
         {isSignUp ? "Already have an account?" : "New to SpentWise?"}{" "}
-        <button
+        <PressButton
           type="button"
           onClick={() => setMode(isSignUp ? "signin" : "signup")}
           className="text-accent"
         >
           {isSignUp ? "Sign in" : "Create one"}
-        </button>
+        </PressButton>
       </p>
     </form>
   );

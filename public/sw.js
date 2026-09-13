@@ -7,7 +7,7 @@
  * stale balances are worse than an offline notice.
  */
 
-const CACHE = "spentwise-v1";
+const CACHE = "spentwise-v2"; // bumped: purges any store poisoned by a dev-mode registration
 const OFFLINE_URL = "/offline.html";
 
 const PRECACHE = [

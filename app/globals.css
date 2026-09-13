@@ -8,30 +8,173 @@
    labels, which is what gives the page its contrast. Colour is nearly absent —
    ink on paper, one accent — so the numbers are the only thing competing for
    attention.
+
+   Everything is defined twice: once for light, once for dark. The dark steps
+   are chosen against the dark surface, never flipped from the light ones — a
+   lightness inversion of a tuned palette is not a tuned palette.
    --------------------------------------------------------------------------- */
+
+/* ---------------------------------------------------------------------------
+   Two palettes, three ways of choosing between them.
+
+   The dark steps are named once below and then *assigned* by two rules: the
+   media query (what a visitor gets before any script runs, or with scripting
+   off) and the attribute (what next-themes writes once the user has picked).
+   Only the assignments are repeated — the values themselves exist in one
+   place, so the two paths cannot drift apart.
+   --------------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+
+  /* --- Light, applied --------------------------------------------------- */
+  --paper: #ffffff;
+  --paper-dim: #f7f8fa;
+  --paper-sunk: #f1f3f6;
+  --line: #e9ebef;
+  --line-strong: #d7dbe1;
+
+  --ink: #0a0e14;
+  --ink-muted: #4a525e;
+  --ink-faint: #6f7680;
+
+  --accent: #1a58b7;
+  --accent-soft: #eef3fc;
+  --on-accent: #ffffff;
+
+  --positive: #00695c;
+  --negative: #b3123c;
+  --negative-soft: #fdeef1;
+
+  /* Categorical tones — validated against #ffffff. See lib/categories.ts. */
+  --tone-blue: #1a58b7;
+  --tone-teal: #00968a;
+  --tone-rose: #b90538;
+  --tone-amber: #c2670a;
+  --tone-violet: #7c3aed;
+  --tone-slate: #5f6368;
+
+  /* Translucent chrome: a light material floating over paper. */
+  --material: rgb(255 255 255 / 0.72);
+  --material-edge: rgb(255 255 255 / 0.5);
+
+  /* --- Dark, defined but not yet applied -------------------------------- */
+  --d-paper: #0e1116;
+  --d-paper-dim: #151a21;
+  --d-paper-sunk: #1b212a;
+  --d-line: #232b36;
+  --d-line-strong: #323b48;
+
+  --d-ink: #f2f5f9;
+  --d-ink-muted: #b6c0cd;
+  --d-ink-faint: #79828f;
+
+  --d-accent: #498ffe;
+  --d-accent-soft: #13233a;
+  /* White on this accent is only 3.16:1 — the filled button takes dark ink. */
+  --d-on-accent: #06121f;
+
+  --d-positive: #34c98a;
+  --d-negative: #ff5c7a;
+  --d-negative-soft: #2a121b;
+
+  /* Same hues as light, re-stepped for the #0e1116 surface. All six checks
+     pass under --pairs all: CVD ΔE 9.5 deutan / 9.0 tritan, contrast ≥ 3:1. */
+  --d-tone-blue: #498ffe;
+  --d-tone-teal: #018d82;
+  --d-tone-rose: #c4003b;
+  --d-tone-amber: #ca6a02;
+  --d-tone-violet: #8231ff;
+  --d-tone-slate: #8b94a0;
+
+  --d-material: rgb(20 25 33 / 0.72);
+  --d-material-edge: rgb(255 255 255 / 0.08);
+}
+
+/* The dark assignment. Repeated verbatim by the two selectors below — keep
+   them identical; only the selector differs. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: var(--d-paper);
+    --paper-dim: var(--d-paper-dim);
+    --paper-sunk: var(--d-paper-sunk);
+    --line: var(--d-line);
+    --line-strong: var(--d-line-strong);
+    --ink: var(--d-ink);
+    --ink-muted: var(--d-ink-muted);
+    --ink-faint: var(--d-ink-faint);
+    --accent: var(--d-accent);
+    --accent-soft: var(--d-accent-soft);
+    --on-accent: var(--d-on-accent);
+    --positive: var(--d-positive);
+    --negative: var(--d-negative);
+    --negative-soft: var(--d-negative-soft);
+    --tone-blue: var(--d-tone-blue);
+    --tone-teal: var(--d-tone-teal);
+    --tone-rose: var(--d-tone-rose);
+    --tone-amber: var(--d-tone-amber);
+    --tone-violet: var(--d-tone-violet);
+    --tone-slate: var(--d-tone-slate);
+    --material: var(--d-material);
+    --material-edge: var(--d-material-edge);
+  }
+}
+
+/* An explicit choice wins over the system preference in both directions. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: var(--d-paper);
+  --paper-dim: var(--d-paper-dim);
+  --paper-sunk: var(--d-paper-sunk);
+  --line: var(--d-line);
+  --line-strong: var(--d-line-strong);
+  --ink: var(--d-ink);
+  --ink-muted: var(--d-ink-muted);
+  --ink-faint: var(--d-ink-faint);
+  --accent: var(--d-accent);
+  --accent-soft: var(--d-accent-soft);
+  --on-accent: var(--d-on-accent);
+  --positive: var(--d-positive);
+  --negative: var(--d-negative);
+  --negative-soft: var(--d-negative-soft);
+  --tone-blue: var(--d-tone-blue);
+  --tone-teal: var(--d-tone-teal);
+  --tone-rose: var(--d-tone-rose);
+  --tone-amber: var(--d-tone-amber);
+  --tone-violet: var(--d-tone-violet);
+  --tone-slate: var(--d-tone-slate);
+  --material: var(--d-material);
+  --material-edge: var(--d-material-edge);
+}
+
+/* `inline` keeps the utilities pointing at the raw variables above, so a
+   scheme change re-resolves every colour without re-emitting a single class. */
+@theme inline {
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-paper: var(--paper);
+  --color-paper-dim: var(--paper-dim);
+  --color-paper-sunk: var(--paper-sunk);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-negative-soft: var(--negative-soft);
+}
+
 @theme {
-  /* --- Ink & paper ------------------------------------------------------ */
-  --color-ink: #0a0e14;
-  --color-ink-muted: #5c6572;
-  --color-ink-faint: #9aa2ae;
-  --color-paper: #ffffff;
-  --color-paper-dim: #f7f8fa;
-  --color-paper-sunk: #f1f3f6;
-  --color-line: #e9ebef;
-  --color-line-strong: #d7dbe1;
+  /* --- Type -------------------------------------------------------------- */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
-  /* --- Accent ----------------------------------------------------------- */
-  --color-accent: #1a58b7;
-  --color-accent-soft: #eef3fc;
-  --color-on-accent: #ffffff;
-
-  /* --- Semantic --------------------------------------------------------- */
-  --color-positive: #00695c;
-  --color-negative: #b3123c;
-  --color-negative-soft: #fdeef1;
-
-  /* --- Type ------------------------------------------------------------- */
-  --font-sans: var(--font-elms-sans), ui-sans-serif, system-ui, sans-serif;
+  /* Tracking is size-specific. Large type reads too loose as it grows, so it
+     tightens; small type reads too tight, so it opens up slightly. One
+     letter-spacing across the whole scale is wrong at one end or the other. */
 
   /* The amount on the add screen. Nothing else comes close to this size. */
   --text-amount: 4.5rem;
@@ -63,10 +206,12 @@
   --text-body: 0.9375rem;
   --text-body--line-height: 1.5;
   --text-body--font-weight: 400;
+  --text-body--letter-spacing: 0;
 
   --text-meta: 0.8125rem;
   --text-meta--line-height: 1.45;
   --text-meta--font-weight: 400;
+  --text-meta--letter-spacing: 0.005em;
 
   /* The counterweight to all that light type. Always uppercase. */
   --text-label: 0.6875rem;
@@ -74,31 +219,82 @@
   --text-label--font-weight: 700;
   --text-label--letter-spacing: 0.14em;
 
-  /* --- Shape ------------------------------------------------------------ */
+  /* --- Shape ------------------------------------------------------------- */
   --radius-sm: 0.375rem;
   --radius-md: 0.75rem;
   --radius-lg: 1.125rem;
   --radius-xl: 1.5rem;
 
-  /* --- Rhythm ----------------------------------------------------------- */
+  /* --- Rhythm ------------------------------------------------------------ */
   --spacing-gutter: 22px;
   --spacing-section: 44px;
+
+  /* --- Motion -------------------------------------------------------------
+     Three curves, and nothing invented. The built-in CSS easings are too weak
+     to read as intentional, so these are the stronger variants:
+
+       ease-out     entrances, exits, anything responding to the user. Starts
+                    fast, so the user sees movement at the moment they are
+                    watching most closely.
+       ease-in-out  something already on screen travelling from A to B.
+       ease-drawer  the iOS drawer curve, for large surfaces.
+
+     `ease-in` is deliberately absent. It delays the first frame, which is
+     exactly the frame that decides whether the interface feels responsive.
+
+     Durations are budgeted by what is moving. Everything interactive stays
+     under 300ms; a 180ms control genuinely feels faster than a 400ms one.
+  */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --duration-press: 160ms;
+  --duration-enter: 260ms;
+  /* Exit is always quicker than enter: the user has already decided, and the
+     interface should get out of the way rather than perform its departure. */
+  --duration-exit: 160ms;
 }
 
 /* --------------------------------------------------------------------------- */
 
 html {
-  background-color: var(--color-paper);
+  background-color: var(--paper);
   overscroll-behavior-y: none;
+  /* Let the face carry its own optical sizing at every step of the scale. */
+  font-optical-sizing: auto;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background-color: var(--color-paper);
-  color: var(--color-ink);
+  background-color: var(--paper);
+  color: var(--ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
+}
+
+/* No 300ms wait between a tap and its handler, anywhere. */
+a,
+button,
+input,
+select,
+textarea,
+label,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+/* Chrome should not behave like a document: no long-press callout, no stray
+   text selection when a drag starts on a control. Content still selects. */
+nav,
+header,
+button,
+[role="button"] {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* Figures line up in columns only if the digits are the same width. */
@@ -107,7 +303,8 @@ body {
   font-feature-settings: "tnum";
 }
 
-/* iOS Safari zooms the viewport when a focused input is under 16px. */
+/* iOS Safari zooms the viewport when a focused input is under 16px. Holding
+   these at 16px is what lets the layout keep user scaling enabled. */
 input,
 textarea,
 select {
@@ -155,15 +352,140 @@ input[type="number"]::-webkit-inner-spin-button {
   display: none;
 }
 
+/* ---------------------------------------------------------------------------
+   Press feedback.
+
+   `.tap` is the CSS half. Components that need feedback on pointer-*down*
+   rather than whenever the browser decides :active applies set `data-pressed`
+   from a pointerdown handler — see components/pressable.tsx. Both paths land
+   on the same transform so they cannot drift apart.
+   --------------------------------------------------------------------------- */
 .tap {
+  /* Named properties, never `all`: `all` transitions whatever happens to
+     change, including layout properties that cannot run on the GPU. */
   transition:
-    transform 0.12s cubic-bezier(0.2, 0, 0, 1),
-    opacity 0.12s ease,
-    background-color 0.12s ease;
+    transform var(--duration-press) var(--ease-out),
+    opacity var(--duration-press) var(--ease-out),
+    background-color var(--duration-press) ease,
+    border-color var(--duration-press) ease,
+    color var(--duration-press) ease;
 }
-.tap:active {
+.tap:active,
+.tap[data-pressed="true"] {
   transform: scale(0.97);
+  /* Pressing down is the acknowledgement and has to be immediate; releasing is
+     the system responding, and takes the full curve. Slow where the user is
+     deciding, fast where the interface is answering. */
+  transition-duration: 60ms;
 }
+
+/* A larger surface should compress less — the same 3% across a full-width
+   panel reads as the whole page flinching. */
+.tap-subtle:active,
+.tap-subtle[data-pressed="true"] {
+  transform: scale(0.99);
+}
+
+/* Hover is gated by Tailwind's own `@media (hover: hover)` wrapper, so a tap on
+   a touch device never leaves a control stuck in its hover state. */
+
+/* ---------------------------------------------------------------------------
+   Hold to confirm.
+
+   A clip-path wipe rather than a width or transform animation: it runs on the
+   compositor, and unlike scaleX it does not stretch the thing it fills.
+   Asymmetric by design — the press takes a full second so the commitment is
+   deliberate, the release snaps back so a change of mind costs nothing.
+   --------------------------------------------------------------------------- */
+.hold-fill {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path var(--duration-exit) var(--ease-out);
+}
+.hold-fill[data-holding="true"] {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 1000ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Keep the progress legible — this one is information, not decoration — but
+     drop it to a plain fade so nothing sweeps across the screen. */
+  /* `!important` here is deliberate: the blanket reduced-motion rule above
+     zeroes every transition, and this one is not decoration — it is the only
+     signal that a one-second hold is under way. */
+  .hold-fill {
+    clip-path: none;
+    opacity: 0;
+    transition: opacity var(--duration-exit) ease !important;
+  }
+  .hold-fill[data-holding="true"] {
+    clip-path: none;
+    opacity: 1;
+    transition: opacity 1000ms linear !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Materials.
+
+   Translucent chrome that content scrolls *under*, rather than an opaque strip
+   that eats a fixed band of the screen. The top edge is a brighter hairline —
+   light catching the near edge of a real pane of glass.
+   --------------------------------------------------------------------------- */
+.material {
+  background-color: var(--material);
+  /* Standard property only — the build adds the -webkit- alias from the
+     browser targets. Writing both by hand makes Lightning CSS treat them as
+     one property and drop whichever came first, which silently cost Firefox
+     its blur. */
+  backdrop-filter: blur(24px) saturate(180%);
+}
+
+.material-top {
+  box-shadow: inset 0 1px 0 0 var(--material-edge);
+}
+
+/* The header hairline only earns its place once something is actually
+   underneath it; until then the title just sits on the paper. */
+.edge-divider {
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--duration-enter) ease;
+}
+.edge-divider[data-stuck="true"] {
+  border-bottom-color: var(--line);
+}
+
+/* ---------------------------------------------------------------------------
+   Entrances. Content arrives with the spring, and only once.
+   --------------------------------------------------------------------------- */
+@keyframes rise {
+  from {
+    opacity: 0;
+    /* Never from scale(0) or from nothing: a small offset reads as arriving,
+       a large one reads as flying in. */
+    transform: translate3d(0, 8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.rise {
+  animation: rise var(--duration-enter) var(--ease-out) both;
+}
+
+/* A list that swaps in from a skeleton all at once reads as a flash. Staggering
+   it turns the swap into a cascade — decorative, so it never gates input, and
+   short enough (40ms steps, capped at six) that the tail is not a wait. */
+.stagger > * {
+  animation: rise var(--duration-enter) var(--ease-out) both;
+}
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 40ms; }
+.stagger > *:nth-child(3) { animation-delay: 80ms; }
+.stagger > *:nth-child(4) { animation-delay: 120ms; }
+.stagger > *:nth-child(5) { animation-delay: 160ms; }
+.stagger > *:nth-child(n + 6) { animation-delay: 200ms; }
 
 /* The amount counter on the add screen, when a digit lands. */
 @keyframes tick {
@@ -177,14 +499,113 @@ input[type="number"]::-webkit-inner-spin-button {
   }
 }
 .animate-tick {
-  animation: tick 0.14s cubic-bezier(0.2, 0, 0, 1);
+  animation: tick 140ms var(--ease-out);
 }
 
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* Skeletons: a slow sweep, well clear of the 0.2 Hz flicker band. */
+.skeleton {
+  background-image: linear-gradient(
+    90deg,
+    var(--paper-sunk) 0%,
+    var(--paper-dim) 50%,
+    var(--paper-sunk) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+  border-radius: 6px;
+}
+
+/* ---------------------------------------------------------------------------
+   Accessibility preferences. Three independent signals, each honoured.
+   --------------------------------------------------------------------------- */
+
+/* Reduced motion is not *no* feedback — it is non-vestibular feedback. Presses
+   still acknowledge, they just stop moving; travel and overshoot go away. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
+
+  .tap:active,
+  .tap[data-pressed="true"],
+  .tap-subtle:active,
+  .tap-subtle[data-pressed="true"] {
+    transform: none;
+    opacity: 0.62;
+  }
+
+  .rise,
+  .stagger > * {
+    animation: none;
+  }
+
+  .skeleton {
+    animation: none;
+    background-image: none;
+    background-color: var(--paper-sunk);
+  }
+}
+
+/* Frost the glass rather than blurring through it. */
+@media (prefers-reduced-transparency: reduce) {
+  .material {
+    background-color: var(--paper);
+    backdrop-filter: none;
+  }
+  .material-top {
+    box-shadow: inset 0 1px 0 0 var(--line);
+  }
+}
+
+/* Solid surfaces and a defined border, rather than a hairline. */
+@media (prefers-contrast: more) {
+  :root {
+    --line: #6f7680;
+    --line-strong: #3a424e;
+    --ink-faint: #4a525e;
+    --material: var(--paper);
+  }
+
+  .material {
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root[data-theme="dark"] {
+    --line: #79828f;
+    --line-strong: #aab3c0;
+    --ink-faint: #ccd4df;
+    --material: var(--paper);
+  }
+}
+
+@media (prefers-contrast: more) and (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --line: #79828f;
+    --line-strong: #aab3c0;
+    --ink-faint: #ccd4df;
+    --material: var(--paper);
+  }
+}
+
+/* A visible focus ring for keyboard users, on every interactive thing. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
 }

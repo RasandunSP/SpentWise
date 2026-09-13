@@ -109,3 +109,124 @@ export function clampPercent(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.min(100, Math.max(0, value));
 }
+
+/* ---------------------------------------------------------------------------
+   Month addressing.
+
+   Screens that look at a month take it from the URL as `?m=YYYY-MM`, so a
+   particular month is linkable, survives a refresh, and lands in history —
+   stepping back through months then works with the browser's own Back button
+   rather than needing its own undo.
+   --------------------------------------------------------------------------- */
+
+/** `YYYY-MM` for the month containing `date`. */
+export function toMonthIso(date = new Date()): string {
+  return `${date.getFullYear()}-${`${date.getMonth() + 1}`.padStart(2, "0")}`;
+}
+
+/** The first day of a `YYYY-MM` string, as a local Date. */
+export function parseMonthIso(monthIso: string): Date {
+  const [year, month] = monthIso.split("-").map(Number);
+  return new Date(year, (month ?? 1) - 1, 1);
+}
+
+/**
+ * Reads `?m=` into a month, falling back to the current one.
+ *
+ * Anything malformed, or any month in the future, collapses to the current
+ * month: the value comes from the URL, so it is user-editable, and a chart of
+ * a month that has not happened is not a state worth rendering.
+ */
+export function resolveMonth(raw: string | undefined): string {
+  const current = toMonthIso();
+  if (!raw || !/^\d{4}-(0[1-9]|1[0-2])$/.test(raw)) return current;
+  return raw > current ? current : raw;
+}
+
+export type MonthView = {
+  /** `YYYY-MM` */
+  month: string;
+  /** Inclusive `YYYY-MM-DD` bounds for querying. */
+  start: string;
+  end: string;
+  /** `YYYY-MM` for the stepper, or null when that direction is exhausted. */
+  previous: string;
+  next: string | null;
+  label: string;
+  isCurrent: boolean;
+};
+
+/** Everything a month-scoped screen needs, derived once from `?m=`. */
+export function monthView(raw: string | undefined): MonthView {
+  const month = resolveMonth(raw);
+  const first = parseMonthIso(month);
+  const { start, end } = monthRange(first);
+
+  const prev = new Date(first.getFullYear(), first.getMonth() - 1, 1);
+  const next = new Date(first.getFullYear(), first.getMonth() + 1, 1);
+  const isCurrent = month === toMonthIso();
+
+  return {
+    month,
+    start,
+    end,
+    previous: toMonthIso(prev),
+    // There is no "next" past the present.
+    next: isCurrent ? null : toMonthIso(next),
+    label: first.toLocaleDateString("en-GB", {
+      month: "long",
+      ...(first.getFullYear() !== new Date().getFullYear()
+        ? { year: "numeric" }
+        : {}),
+    }),
+    isCurrent,
+  };
+}
+
+/**
+ * How far through the month we are, 0–1.
+ *
+ * A past month is fully elapsed; the current month is measured to today. This
+ * is what lets a budget say "ahead of pace" instead of only "62% spent", which
+ * on the 5th and on the 25th mean completely different things.
+ */
+export function monthElapsed(monthIso: string): number {
+  const first = parseMonthIso(monthIso);
+  const days = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+  if (monthIso < toMonthIso()) return 1;
+  if (monthIso > toMonthIso()) return 0;
+  return new Date().getDate() / days;
+}
+
+/* ---------------------------------------------------------------------------
+   Currency codes.
+   --------------------------------------------------------------------------- */
+
+/**
+ * Formats an amount in a given ISO currency.
+ *
+ * Distinct from `formatMoney`, which takes the user's own display prefix for
+ * the primary currency ("Rs."). This one is for the *other* currency, where
+ * the right symbol is whatever the locale data says rather than something the
+ * user typed — and falls back to the bare code for anything Intl doesn't know.
+ */
+export function formatCurrency(
+  amount: number,
+  code: string,
+  { compact = false }: { compact?: boolean } = {},
+): string {
+  const value = Number.isFinite(amount) ? amount : 0;
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: code,
+      minimumFractionDigits: compact ? 0 : 2,
+      maximumFractionDigits: compact ? 0 : 2,
+    }).format(value);
+  } catch {
+    return `${code} ${new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: compact ? 0 : 2,
+      maximumFractionDigits: compact ? 0 : 2,
+    }).format(value)}`;
+  }
+}

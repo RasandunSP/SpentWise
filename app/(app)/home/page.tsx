@@ -1,14 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PressLink } from "@/components/pressable";
 import { Icon } from "@/components/icon";
 import { Wordmark } from "@/components/wordmark";
 import { ExpenseRow } from "@/components/expense-row";
 import {
   getCategoryTotals,
+  getDueSubscriptions,
   getMonthSummary,
   getProfile,
+  getQuickPicks,
   getRecentExpenses,
 } from "@/lib/queries";
+import { QuickAdd } from "@/components/quick-add";
+import { DueSubscriptions } from "@/components/due-subscriptions";
 import { toneOf } from "@/lib/categories";
 import { clampPercent, formatMoney, monthRange, splitMoney } from "@/lib/format";
 
@@ -20,10 +25,12 @@ export default async function HomePage() {
   const profile = await getProfile();
   const { start, end } = monthRange();
 
-  const [summary, expenses, totals] = await Promise.all([
+  const [summary, expenses, totals, picks, due] = await Promise.all([
     getMonthSummary(Number(profile.monthly_budget)),
     getRecentExpenses(6),
     getCategoryTotals(start, end),
+    getQuickPicks(4),
+    getDueSubscriptions(),
   ]);
 
   const currency = profile.currency;
@@ -46,13 +53,13 @@ export default async function HomePage() {
       >
         <div className="flex items-center justify-between">
           <Wordmark />
-          <Link
+          <PressLink
             href="/settings"
             aria-label="Settings"
             className="tap -mr-2 flex h-9 w-9 items-center justify-center rounded-full text-ink-faint"
           >
             <Icon name="tune" size={22} />
-          </Link>
+          </PressLink>
         </div>
 
         <div className="pt-8">
@@ -110,28 +117,39 @@ export default async function HomePage() {
             </p>
 
             <p className="pt-3 text-meta text-paper/55">
-              {summary.changePercent === null
-                ? "First month of tracking."
-                : summary.changePercent > 0
-                  ? "More than last month at this point."
-                  : "Less than last month at this point."}
+              {summary.budget > 0 && summary.elapsed > 0 && summary.elapsed < 1
+                ? summary.paceDelta > 0
+                  ? `${formatMoney(summary.paceDelta, currency, { compact: true })} ahead of an even pace`
+                  : `${formatMoney(Math.abs(summary.paceDelta), currency, { compact: true })} under an even pace`
+                : summary.changePercent === null
+                  ? "First month of tracking."
+                  : summary.changePercent > 0
+                    ? "More than last month at this point."
+                    : "Less than last month at this point."}
             </p>
           </div>
         </section>
 
         {/* --- The action this app exists for. ---------------------------- */}
         <section className="pt-4">
-          <Link
+          <PressLink
             href="/add"
-            className="tap flex h-16 w-full items-center justify-center gap-2.5 rounded-xl
-              bg-accent text-on-accent"
+            haptic
+            className="tap tap-subtle flex h-16 w-full items-center justify-center gap-2.5
+              rounded-xl bg-accent text-on-accent"
           >
             <Icon name="add" size={24} weight={400} className="text-on-accent" />
             <span className="text-title" style={{ fontSize: "1.125rem" }}>
               Add expense
             </span>
-          </Link>
+          </PressLink>
         </section>
+
+        {/* Above Quick add on purpose: one of these is a deadline, the other
+            is a convenience, and the deadline should be met first. */}
+        <DueSubscriptions subscriptions={due} currency={currency} />
+
+        <QuickAdd picks={picks} currency={currency} />
 
         {/* --- Two quick reads, side by side. ----------------------------- */}
         <section className="grid grid-cols-2 gap-3 pt-4">
@@ -150,6 +168,7 @@ export default async function HomePage() {
                   })
                 : "Not set"
             }
+            glyph="account_balance_wallet"
             tone={summary.budget > 0 && overBudget ? "negative" : "default"}
             href={summary.budget > 0 ? undefined : "/settings"}
             foot={
@@ -160,13 +179,14 @@ export default async function HomePage() {
           />
           <Tile
             label="Top category"
+            glyph="trophy"
             value={top ? top.category_name : "—"}
             foot={
               top
                 ? formatMoney(Number(top.total), currency, { compact: true })
                 : `${summary.daysLeft} days left in ${monthName}`
             }
-            dot={top ? toneOf(top.tone).hex : undefined}
+            dot={top ? toneOf(top.tone).color : undefined}
           />
         </section>
 
@@ -215,6 +235,7 @@ export default async function HomePage() {
                   key={expense.id}
                   expense={expense}
                   currency={currency}
+                  href={`/edit/${expense.id}`}
                 />
               ))}
             </div>
@@ -255,7 +276,7 @@ export default async function HomePage() {
                           width: `${percent}%`,
                           backgroundColor: over
                             ? "var(--color-negative)"
-                            : tone.hex,
+                            : tone.color,
                         }}
                       />
                     </div>
@@ -276,6 +297,7 @@ function Tile({
   foot,
   href,
   dot,
+  glyph,
   tone = "default",
 }: {
   label: string;
@@ -283,11 +305,19 @@ function Tile({
   foot?: string;
   href?: string;
   dot?: string;
+  /** Material Symbol shown in place of a written label. */
+  glyph?: string;
   tone?: "default" | "negative";
 }) {
   const body = (
     <>
-      <span className="text-label uppercase text-ink-faint">{label}</span>
+      {/* Glyph *and* label. An icon alone was ambiguous here — a wallet over
+          "Not set" and a trophy over a category name read as decoration, not
+          as headings. The icon speeds up recognition; the word carries it. */}
+      <span className="flex items-center gap-1.5 text-ink-faint">
+        {glyph ? <Icon name={glyph} size={14} aria-hidden /> : null}
+        <span className="text-label uppercase">{label}</span>
+      </span>
       <span className="flex items-baseline gap-2 pt-2.5">
         {dot ? (
           <span
@@ -313,9 +343,9 @@ function Tile({
     "flex min-w-0 flex-col rounded-xl border border-line px-4 py-4";
 
   return href ? (
-    <Link href={href} className={`${className} tap`}>
+    <PressLink href={href} className={`${className} tap`}>
       {body}
-    </Link>
+    </PressLink>
   ) : (
     <div className={className}>{body}</div>
   );

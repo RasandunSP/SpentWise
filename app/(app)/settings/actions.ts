@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/supabase/server";
 import { ICON_CHOICES, TONE_KEYS } from "@/lib/categories";
+import { isMissingCurrencyColumn, MIGRATION_HINT } from "@/lib/rates";
 
 export type SettingsState = { error?: string; notice?: string };
 
@@ -25,11 +26,21 @@ export async function updateProfile(
   const currency = String(formData.get("currency") ?? "").trim() || "Rs.";
   const monthlyBudget = parseMoney(formData.get("monthly_budget"));
 
+  // "" is a real choice here — it means "back to one currency" — so an empty
+  // value clears the column rather than being treated as "unchanged".
+  const rawSecondary = String(formData.get("secondary_currency") ?? "")
+    .trim()
+    .toUpperCase();
+  const secondaryCurrency = rawSecondary === "" ? null : rawSecondary;
+
   if (monthlyBudget === null) {
     return { error: "Enter a budget of zero or more." };
   }
   if (currency.length > 5) {
     return { error: "Currency symbols are at most 5 characters." };
+  }
+  if (secondaryCurrency !== null && !/^[A-Z]{3}$/.test(secondaryCurrency)) {
+    return { error: "Pick a currency from the list." };
   }
 
   const { error } = await supabase
@@ -39,14 +50,20 @@ export async function updateProfile(
       id: user.id,
       display_name: displayName || null,
       currency,
+      secondary_currency: secondaryCurrency,
       monthly_budget: monthlyBudget,
     });
 
-  if (error) return { error: `Couldn't save: ${error.message}` };
+  if (error) {
+    if (isMissingCurrencyColumn(error)) return { error: MIGRATION_HINT };
+    return { error: `Couldn't save: ${error.message}` };
+  }
 
   revalidatePath("/home");
   revalidatePath("/reports");
   revalidatePath("/settings");
+  revalidatePath("/convert");
+  revalidatePath("/add");
   return { notice: "Saved." };
 }
 
@@ -114,15 +131,20 @@ export async function updateCategoryBudget(formData: FormData) {
   revalidatePath("/settings");
 }
 
-export async function deleteCategory(formData: FormData) {
+export async function deleteCategory(id: string): Promise<string | undefined> {
   const { supabase, user } = await requireUser();
 
-  const id = String(formData.get("id") ?? "");
-  if (!id) return;
+  if (!id) return "Nothing to delete.";
 
   // Expenses survive — the FK is ON DELETE SET NULL, so they become
   // "Uncategorised" rather than vanishing from the user's history.
-  await supabase.from("categories").delete().eq("id", id).eq("user_id", user.id);
+  const { error } = await supabase
+    .from("categories")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) return `Couldn't delete that: ${error.message}`;
 
   revalidatePath("/home");
   revalidatePath("/reports");
