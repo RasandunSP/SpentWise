@@ -1,0 +1,34 @@
+# Netlify configuration.
+#
+# Build command, publish directory and environment variables are set in the
+# Netlify UI. This file exists only to configure secrets scanning, which
+# otherwise fails the build on two false positives.
+
+[build.environment]
+
+  # Public by design, not a leak.
+  #
+  # The `NEXT_PUBLIC_` prefix is Next.js's instruction to inline a value into
+  # the browser bundle, so finding these in the build output is the intended
+  # outcome rather than an accident. Supabase publishes the anon key for
+  # exactly this purpose: it identifies the project, it does not authorise
+  # anything. Every table is protected by row-level security instead, so an
+  # anonymous caller holding this key reads nothing — `npm run check:supabase`
+  # asserts that, and it is the check to re-run before trusting this line.
+  #
+  # The service-role key is the one that must never appear here or in
+  # .env.local; it is deliberately absent from this project entirely.
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY"
+
+  # The Turbopack cache, which is never served.
+  #
+  # EXCHANGERATE_API_KEY *is* a real secret — it is read only in lib/rates.ts,
+  # behind `server-only`, as a runtime lookup that is never inlined. It reaches
+  # none of the deployed artifacts; it appears solely in Turbopack's
+  # intermediate cache files, which exist to speed up the next build and are
+  # not part of the deploy.
+  #
+  # Scoped to the cache directories rather than omitting the key, on purpose:
+  # if that key ever does leak into a real chunk, an edge function or the
+  # client bundle, this build must fail exactly as it did today.
+  SECRETS_SCAN_OMIT_PATHS = ".next/cache/**,.netlify/.next/cache/**"
